@@ -1,0 +1,168 @@
+#!/bin/zsh
+# -*- mode: shell-script; sh-basic-offset: 8; tab-width: 8 -*-
+# $ ttt $
+#
+# Author: Tomi Ollila -- too ät iki piste fi
+#
+#	Copyright (c) 2015 Tomi Ollila
+#	    All rights reserved
+#
+# Created: Mon 29 Sep 2014 23:15:31 EEST too
+# Last modified: Thu 19 Mar 2015 19:40:38 +0200 too
+
+set -eu
+#set -x
+
+# --- the following 4 (socks4_* & https_*) name=value pairs are
+# --- preserved over reinstalls (if edited); defaults used when unset
+
+socks4_ip=
+socks4_port=
+
+https_ip=
+https_port=
+
+# LANG=C LC_ALL=C; export LANG LC_ALL
+LANG=en_US.utf8 LC_ALL=en_US.utf8; export LANG LC_ALL
+PATH='/sbin:/usr/sbin:/bin:/usr/bin'; export PATH
+
+case ~ in '~') exec >&2; echo
+	echo "Shell '/bin/sh' lacks some required modern shell functionality."
+	echo "Try 'ksh $0${1+ $*}', 'bash $0${1+ $*}'"
+	echo " or 'zsh $0${1+ $*}' instead."; echo
+	exit 1
+esac
+
+case ${BASH_VERSION-} in *.*) shopt -s xpg_echo; esac
+case ${ZSH_VERSION-} in *.*) emulate ksh; set -eu; esac
+
+die () { echo "$@" >&2; exit 1; }
+
+x_exec () { echo + "$@" >&2; exec "$@"; die "exec '$*' failed"; }
+
+case $# in 0) exec >&2; echo
+ echo 'Trivial TCP4 Tunnels (verdate)'
+ echo "'''''''''''''''''''''''''''''''''''''"
+ echo
+ echo "Usage: ${0##*/} (b|u|us|is|uh|ih|ssh|cbi) args..."
+ echo
+ echo ' b   command [args]  --  bind 127.1:5045 to unix domain socket'
+ echo ' u   command [args]  --  connect 127.1:5045 to unix domain socket'
+ echo ' us  command [args]  --  like above, and use socks4 to connect'
+ echo ' is  command [args]  --  use socks4 to connect without unix socket'
+ echo ' uh  command [args]  --  like "us", and use https proxy to connect'
+ echo ' ih  command [args]  --  use https proxy to connect without unix socket'
+ echo ' ssh [args]  --  b, with ssh and set dynamic port mapping to use the port'
+ echo ' cbi [args]  --  u, with chrome browser incognito and use socks5 to connect'
+ echo
+ echo " Usually one first runs 'ttt ssh ...' to create the tunnel and then"
+ echo " 'ttt us {command} {args}' to have general client use the created"
+ echo " tunnel. 'ttt cbi' is helper to use chromium/google-chrome with its"
+ echo " own socks5 client interface".
+ echo; exit
+esac
+
+# http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
+# XXX archos to be determined in case multiarch $HOME to be supported
+tttlibpath=`exec dirname "$0"` # modified by install
+dbg=
+
+NL=${IFS#??}; readonly NL # IFS is space tab newline, drop first 2
+
+setenvs=
+setenv ()
+{
+	# this 'modern' shell feature works...
+	export $1=$2
+	setenvs=${setenvs:+$setenvs$NL}'  '$1=$2
+}
+
+preloads=
+preload_append ()
+{
+	case $preloads in *-ttt-$1${dbg}.*) return; esac
+	ldpf=$tttlibpath/ldpreload-ttt-$1${dbg}.so
+	test -f "$ldpf" || die "'$ldpf': no such file"
+        preloads=${preloads:+$preloads:}$ldpf
+}
+
+# install script edited uname and uid strings below...
+case `uname` in Linux)
+	usockpath=@/tmp/user-$UID/td.ttd
+;; *) # not Linux
+  case ${XDG_RUNTIME_DIR-} in '')
+	usockpath=/tmp/user-$UID
+	test -d $usockpath || ( umask 077; exec mkdir $usockpath )
+	chmod 700 $usockpath
+	usockpath=$usockpath/ttt-usock
+  ;; *)
+	usockpath=$XDG_RUNTIME_DIR/ttt-usock
+  esac
+esac
+
+set_4u ()
+{
+	setenv I2U_PORT 5045
+	setenv I2U_PATH $usockpath
+}
+
+set_bind ()
+{
+	ss=`command -v ss 2>/dev/null` || die "Command 'ss' needed"
+	if "$ss" -xl | grep -q " $usockpath "
+	then die "'$usockpath' already bound"
+	fi
+	case $usockpath in @*) ;; *) rm -f "$usockpath" ;; esac
+	preload_append bind
+	set_4u
+}
+
+set_connect ()
+{
+	case $1 in i2u) set_4u; esac
+	case $2
+	   in socks4)	setenv SOCKS4_PORT ${socks4_port:-5045}
+			setenv SOCKS4_IP ${socks4_ip:-127.1}
+	   ;; https)	setenv HTTPS_PORT ${https_port:-5045}
+			setenv HTTPS_IP  ${https_ip:-127.1}
+	esac
+	preload_append connect
+}
+
+find_chrome ()
+{
+	chrome=`command -v google-chrome 2>/dev/null` ||
+	chrome=`command -v chromium-browser 2>/dev/null` ||
+	die "Cannot find chrome browser"
+	case $chrome in *chrome) cbcnfdir=gchrome-ttt
+		;;	*) cbcnfdir=chromium-ttt
+	esac
+}
+
+opt=$1; shift
+case $opt
+in	b)	set_bind
+;;	u)	set_connect i2u -
+;;	us)	set_connect i2u socks4
+;;	is)	set_connect -	socks4
+;;	uh)	set_connect i2u https
+;;	ih)	set_connect -	https
+;;	ssh)	set_bind; set ssh -D 127.1:5045 "$@"
+;;	cbi)	set_connect i2u -
+		find_chrome
+		set $chrome --user-data-dir=$HOME/.config/$cbcnfdir \
+			--host-resolver-rules='MAP * 0.0.0.0 , EXCLUDE 127.1' \
+			--incognito --proxy-server=socks5://127.1:5045 \ "$@"
+;;	*)	die "'$opt': unknown option"
+esac
+
+unset socks4_ip socks4_port https_ip https_port
+
+setenv LD_PRELOAD "${LD_PRELOAD:+$LD_PRELOAD:}$preloads"
+
+echo To environment:
+echo "$setenvs"
+
+case $# in 0) set env; esac
+x_exec "$@"
