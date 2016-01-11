@@ -22,7 +22,7 @@
  *
  * Created: Tue 22 Nov 2011 16:55:43 +0200 too
  * Reorganized: Fri 03 Oct 2014 19:21:19 +0300 too
- * Last modified: Thu 19 Mar 2015 19:40:03 +0200 too
+ * Last modified: Mon 11 Jan 2016 14:29:36 +0200 too
  */
 
 #define VERDATE "1.0 (2015-03-19)"
@@ -420,6 +420,7 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 		    diev(1, "HTTPS_PORT '", str, "' incorrect", null);
 		https_addr.sin_port = IPORT(port);
 	    }
+	    https_addr.sin_family = AF_INET;
 	}
     }
 #if DBG
