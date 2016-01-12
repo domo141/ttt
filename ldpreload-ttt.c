@@ -22,7 +22,7 @@
  *
  * Created: Tue 22 Nov 2011 16:55:43 +0200 too
  * Reorganized: Fri 03 Oct 2014 19:21:19 +0300 too
- * Last modified: Mon 11 Jan 2016 14:29:36 +0200 too
+ * Last modified: Tue 12 Jan 2016 21:23:45 +0200 too
  */
 
 #define VERDATE "1.0 (2015-03-19)"
@@ -551,13 +551,13 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 
     else if (https_addr.sin_port != 0) {
 	struct iovec iov[3];
-	char buf[80];
+	char buf[256];
 	int pos;
 	unsigned char * addrbytes
 	    = (unsigned char *)&((struct sockaddr_in *)addr)->sin_addr.s_addr;
 
 	/* request:  "CONNECT <remotehost>[:<port>] HTTP/1.1\r\n\r\n"
-	   response: "HTTP/1.1 200 Connection established\r\n\r\n" */
+	   response: "HTTP/1.1 200 Connection established\r\n[...\r\n]\r\n" */
 
 	/* for writev(), iov[n].iov_base is const */
 	*(const char **)&(iov[0].iov_base) = "CONNECT ";
@@ -579,20 +579,20 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 	/* XXX check return value (adds up to iov_lens) */
 	writev(sd, iov, 3);
 
-	dwritebytes("request ->", iov[1].iov_base, iov[1].iov_len);
+	dwritebytes("CONNECT request ->", iov[1].iov_base, iov[1].iov_len);
 
 	/* response must come in period short enough */
 	if (pollthis(sd, POLLIN) < 0)
 	    goto _nogo;
 
-	int l;
+	int l, x = 0;
 	while ((l = recv(sd, buf, sizeof buf, MSG_PEEK)) > 0) {
-	    dwritebytes("reply <-", buf, l);
+	    dwritebytes("CONNECT reply <-", buf, l);
 
 	    if (l == sizeof buf)
 		goto _nogo;
 
-	    for (int i = 0, x = 0; i < l; i++)
+	    for (int i = 0; i < l; i++) {
 		/* XXX add loop counter, so don't try forever */
 		/* alternatively, consume up and do normal poll */
 		if (buf[i] == '\n') {
@@ -604,7 +604,11 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 			}
 			else goto _nogo;
 		    else
-			x = 1; }
+			x = 1;
+		}
+		else if (buf[i] != '\r')
+		    x = 0;
+	    }
 	    /* setting up SIGIO for edge triggered events is too problematic */
 	    poll(0, 0, 200);
 	}
