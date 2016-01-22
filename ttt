@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Sep 2014 23:15:31 EEST too
-# Last modified: Thu 19 Mar 2015 19:40:38 +0200 too
+# Last modified: Fri 22 Jan 2016 17:17:34 +0200 too
 
 set -eu
 #set -x
@@ -23,8 +23,8 @@ https_ip=
 https_port=
 
 # LANG=C LC_ALL=C; export LANG LC_ALL
-LANG=en_US.utf8 LC_ALL=en_US.utf8; export LANG LC_ALL
-PATH='/sbin:/usr/sbin:/bin:/usr/bin'; export PATH
+# LANG=en_US.utf8 LC_ALL=en_US.utf8; export LANG LC_ALL
+# PATH='/sbin:/usr/sbin:/bin:/usr/bin'; export PATH
 
 case ~ in '~') exec >&2; echo
 	echo "Shell '/bin/sh' lacks some required modern shell functionality."
@@ -88,7 +88,7 @@ preload_append ()
 }
 
 # install script edited uname and uid strings below...
-case `uname` in Linux)
+case `exec uname` in Linux)
 	usockpath=@/tmp/user-$UID/td.ttd
 ;; *) # not Linux
   case ${XDG_RUNTIME_DIR-} in '')
@@ -134,7 +134,7 @@ find_chrome ()
 {
 	chrome=`command -v google-chrome 2>/dev/null` ||
 	chrome=`command -v chromium-browser 2>/dev/null` ||
-	die "Cannot find chrome browser"
+	die "Cannot find chrome/chromium browser"
 	case $chrome in *chrome) cbcnfdir=gchrome-ttt
 		;;	*) cbcnfdir=chromium-ttt
 	esac

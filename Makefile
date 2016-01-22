@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Sep 2014 20:42:05 EEST too
-# Last modified: Thu 19 Mar 2015 19:40:46 +0200 too
+# Last modified: Fri 22 Jan 2016 17:14:16 +0200 too
 
 VERDATE=1.0 (2015-03-19)
 
@@ -78,7 +78,7 @@ install.sh:
 		-e "/^https_ip=/s|=.*|=$https_ip|" \
 		-e "/^https_port=/s|=.*|=$https_port|" \
 		-e '1s|.*|#!/bin/sh|' -e 's/$UID/'"$uid/" \
-		-e 's/`uname`/'"$uname/" ttt > $HOME/bin/ttt.wip
+		-e 's/`exec uname`/'"$uname/" ttt > $HOME/bin/ttt.wip
 	chmod 755 $HOME/bin/ttt.wip
 	mv -fT $HOME/bin/ttt.wip $HOME/bin/ttt
 #	#eos
