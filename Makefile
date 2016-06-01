@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Sep 2014 20:42:05 EEST too
-# Last modified: Fri 22 Jan 2016 17:14:16 +0200 too
+# Last modified: Wed 01 Jun 2016 13:25:15 +0300 too
 
 VERDATE=1.0 (2015-03-19)
 
@@ -15,7 +15,7 @@ SHELL = /bin/sh
 
 TRGSNB	= ldpreload-ttt-bind.so		ldpreload-ttt-connect.so
 TRGDDBG	= ldpreload-ttt-bind-dbg.so	ldpreload-ttt-connect-dbg.so
-TRGS=	$(TRGSNB) $(TRGSDBG)
+TRGS=	$(TRGSNB) $(TRGDDBG)
 
 .PHONY: all
 all: $(TRGS)
@@ -36,6 +36,7 @@ install: all
 
 export VERDATE
 export TRGSNB
+export TRGDDBG
 
 install.sh:
 	test -n "$1" || exit 1 # internal shell script; not to be made directly
@@ -45,6 +46,7 @@ install.sh:
 	case $1 in i=1) ;; *)
 	  echo
 	  echo Enter '' make install i=1 ''
+	  echo
 	  echo To install "'ttt'" to $HOME/bin/
 	  echo and ldpreloads to $dd/.
 	  echo
@@ -67,9 +69,9 @@ install.sh:
 	grep "VERDATE \"$VERDATE" ldpreload-ttt.c
 	rm -rf $dd
 	mkdir -p $dd
-	cp $TRGSNB $dd
+	cp $TRGSNB $TRGDDBG $dd
 	saved_IFS=$IFS; readonly saved_IFS
-	IFS='=('; getuid () { uid=$2; }; getuid `id`; IFS=$saved_IFS
+	IFS='=('; getuid () { uid=$2; }; getuid `exec id`; IFS=$saved_IFS
 	uname=`exec uname`
 	sed	-e "s/(verdate)/$VERDATE/" \
 		-e "/^tttlibpath=/ s|=.*|=$dd|" \

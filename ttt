@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Sep 2014 23:15:31 EEST too
-# Last modified: Fri 22 Jan 2016 17:17:34 +0200 too
+# Last modified: Wed 01 Jun 2016 13:22:59 +0300 too
 
 set -eu
 #set -x
@@ -40,11 +40,13 @@ die () { echo "$@" >&2; exit 1; }
 
 x_exec () { echo + "$@" >&2; exec "$@"; die "exec '$*' failed"; }
 
+case ${1-} in -D) dbg=-dbg; shift ;; *) dbg= ;; esac
+
 case $# in 0) exec >&2; echo
  echo 'Trivial TCP4 Tunnels (verdate)'
  echo "'''''''''''''''''''''''''''''''''''''"
  echo
- echo "Usage: ${0##*/} (b|u|us|is|uh|ih|ssh|cbi) args..."
+ echo "Usage: ${0##*/} [-D] (b|u|us|is|uh|ih|ssh|cbi) args..."
  echo
  echo ' b   command [args]  --  bind 127.1:5045 to unix domain socket'
  echo ' u   command [args]  --  connect 127.1:5045 to unix domain socket'
@@ -66,7 +68,6 @@ esac
 
 # XXX archos to be determined in case multiarch $HOME to be supported
 tttlibpath=`exec dirname "$0"` # modified by install
-dbg=
 
 NL=${IFS#??}; readonly NL # IFS is space tab newline, drop first 2
 
