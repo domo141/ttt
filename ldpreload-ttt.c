@@ -405,6 +405,7 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 		int port = atoi(str);
 		if (port <= 1 || port > 65535)
 		    diev(1, "SOCKS4_PORT '", str, "' incorrect", null);
+		socks4_addr.sin_family = AF_INET;
 		socks4_addr.sin_port = IPORT(port);
 	    }
 	}
