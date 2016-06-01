@@ -22,7 +22,7 @@
  *
  * Created: Tue 22 Nov 2011 16:55:43 +0200 too
  * Reorganized: Fri 03 Oct 2014 19:21:19 +0300 too
- * Last modified: Tue 12 Jan 2016 21:23:45 +0200 too
+ * Last modified: Wed 01 Jun 2016 13:18:20 +0300 too
  */
 
 #define VERDATE "1.0 (2015-03-19)"
@@ -253,7 +253,7 @@ static const char * set_upath(void)
 {
     if (upath_len >= 0) return upath;
     upath = getenv("I2U_PATH");
-    if (upath == null) return null;
+    if (upath == null || upath[0] == '\0') return null;
 
     upath_len = strlen(upath);
     if (upath_len >= UNIX_PATH_MAX)
@@ -280,7 +280,7 @@ int bind(int sd, struct sockaddr * addr, socklen_t addrlen)
 	char * str;
 
 	if (set_upath() == null)
-	    diev(1, "I2U_PATH env var missing", null);
+	    diev(1, "I2U_PATH env var missing (or value empty)", null);
 
 	if ((str = getenv("I2U_PORT")) == null)
 	    diev(1, "I2U_PORT env var missing", null);
@@ -384,9 +384,9 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 	set_upath();
 
 	char * str = getenv("I2U_PORT");
-	if (str) {
+	if (str && str[0] != '\0') {
 	    i2uport = atoi(str);
-	    if (i2uport < 0)
+	    if (i2uport <= 0)
 		diev(1, "I2U_PORT env var '", str, "' invalid", null);
 	    i2uport = IPORT(i2uport);
 	}
@@ -397,11 +397,11 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 
 	memset(&socks4_addr, 0, sizeof socks4_addr);
 	str = getenv("SOCKS4_IP");
-	if (str) {
+	if (str && str[0] != '\0') {
 	    if (inet_aton(str, &socks4_addr.sin_addr) == 0)
 		diev(1, "SOCKS4_IP address '", str, "' incorrect", null);
 	    str = getenv("SOCKS4_PORT");
-	    if (str) {
+	    if (str && str[0] != '\0') {
 		int port = atoi(str);
 		if (port <= 1 || port > 65535)
 		    diev(1, "SOCKS4_PORT '", str, "' incorrect", null);
@@ -410,11 +410,11 @@ int connect(int sd, struct sockaddr * addr, socklen_t addrlen)
 	}
 	memset(&https_addr, 0, sizeof https_addr);
 	str = getenv("HTTPS_IP");
-	if (str) {
+	if (str && str[0] != '\0') {
 	    if (inet_aton(str, &https_addr.sin_addr) == 0)
 		diev(1, "HTTPS_IP address '", str, "' incorrect", null);
 	    str = getenv("HTTPS_PORT");
-	    if (str) {
+	    if (str && str[0] != '\0') {
 		int port = atoi(str);
 		if (port <= 1 || port > 65535)
 		    diev(1, "HTTPS_PORT '", str, "' incorrect", null);
