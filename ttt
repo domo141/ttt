@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Sep 2014 23:15:31 EEST too
-# Last modified: Wed 01 Jun 2016 13:22:59 +0300 too
+# Last modified: Mon 06 Jun 2016 11:10:37 +0300 too
 
 set -eu
 #set -x
@@ -23,7 +23,7 @@ https_ip=
 https_port=
 
 # LANG=C LC_ALL=C; export LANG LC_ALL
-# LANG=en_US.utf8 LC_ALL=en_US.utf8; export LANG LC_ALL
+# LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8; export LANG LC_ALL
 # PATH='/sbin:/usr/sbin:/bin:/usr/bin'; export PATH
 
 case ~ in '~') exec >&2; echo
