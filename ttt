@@ -1,6 +1,6 @@
 #!/bin/zsh
 # -*- mode: shell-script; sh-basic-offset: 8; tab-width: 8 -*-
-# $ ttt $
+# $ ttt — trivial tcpv4 tunnels $
 #
 # Author: Tomi Ollila -- too ät iki piste fi
 #
@@ -8,13 +8,15 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Sep 2014 23:15:31 EEST too
-# Last modified: Mon 06 Jun 2016 11:10:37 +0300 too
+# Last modified: Thu 16 Jun 2016 21:39:52 +0300 too
 
-set -eu
-#set -x
+set -u  # expanding unset variable makes non-interactive shell exit immediately
+set -f  # disable pathname expansion by default -- makes e.g. eval more robust
+set -e  # exit on error -- know potential false negatives and positives !
+#et -x  # s/#/s/ may help debugging
 
 # --- the following 4 (socks4_* & https_*) name=value pairs are
-# --- preserved over reinstalls (if edited); defaults used when unset
+# --- preserved over reinstalls (if edited); defaults used when empty
 
 socks4_ip=
 socks4_port=
@@ -26,19 +28,9 @@ https_port=
 # LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8; export LANG LC_ALL
 # PATH='/sbin:/usr/sbin:/bin:/usr/bin'; export PATH
 
-case ~ in '~') exec >&2; echo
-	echo "Shell '/bin/sh' lacks some required modern shell functionality."
-	echo "Try 'ksh $0${1+ $*}', 'bash $0${1+ $*}'"
-	echo " or 'zsh $0${1+ $*}' instead."; echo
-	exit 1
-esac
-
-case ${BASH_VERSION-} in *.*) shopt -s xpg_echo; esac
-case ${ZSH_VERSION-} in *.*) emulate ksh; set -eu; esac
+case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
 die () { echo "$@" >&2; exit 1; }
-
-x_exec () { echo + "$@" >&2; exec "$@"; die "exec '$*' failed"; }
 
 case ${1-} in -D) dbg=-dbg; shift ;; *) dbg= ;; esac
 
@@ -166,4 +158,6 @@ echo To environment:
 echo "$setenvs"
 
 case $# in 0) set env; esac
+
+x_exec () { echo + "$@" >&2; exec "$@"; die "exec '$*' failed"; }
 x_exec "$@"
